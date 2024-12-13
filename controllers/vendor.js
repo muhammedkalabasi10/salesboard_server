@@ -43,3 +43,18 @@ export const getVendor = async (req, res) => {
         res.status(404).json({ message: err.message });
     }
 };
+
+export const refresh = async (req, res) => {
+    const cookies = req.cookies;
+    if (!cookies?.jwt) return res.status(401).json({ message: "Unauthorizedd" });
+    const refreshToken = cookies.jwt;
+    jwt.verify(refreshToken, REFRESH_TOKEN_SECRET, async (err, decoded) => {
+      if (err) return res.status(403).json({ message: "Forbidden" });
+      const foundVendor = await VendorModel.findOne({ name: decoded.vendor }).exec();
+      if (!foundVendor) return res.status(401).json({ message: "Unauthorized" });
+      const accessToken = jwt.sign({ user: foundVendor }, ACCESS_TOKEN_SECRET, {
+        expiresIn: "30s",
+      });
+      res.json({ accessToken });
+    });
+  };
