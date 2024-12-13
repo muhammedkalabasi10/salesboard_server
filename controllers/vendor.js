@@ -1,9 +1,34 @@
 import VendorModel from "../models/VendorModel.js";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
-export const getVendors = async (req, res) => {
-    try {
-        const vendors = await VendorModel.find();
-        res.status(200).json(vendors);
+dotenv.config();
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
+
+export const signIn = async (req, res) => {
+    const { name } = req.body;
+    try{
+        if ( !name )
+            return res
+              .status(400)
+              .json({ message: "Name is required." });
+        const existingVendor = await VendorModel.findOne({ name });
+        if( !existingVendor )
+            return res.status(404).json({ message: "Vendor doesn't exist" });
+        const accessToken = jwt.sign({ vendor: existingVendor }, ACCESS_TOKEN_SECRET, {
+            expiresIn: "30s",
+          });
+          const refreshToken = jwt.sign({ vendor: name }, REFRESH_TOKEN_SECRET, {
+            expiresIn: "7d",
+          });
+          res.cookie("jwt", refreshToken, {
+            httpOnly: false,
+            secure: true,
+            sameSite: "None",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+          });
+          res.status(200).json({ accessToken });
     } catch (err) {
         res.status(404).json({ message: err.message });
     }
@@ -16,37 +41,5 @@ export const getVendor = async (req, res) => {
         res.status(200).json(vendor);
     } catch (err) {
         res.status(404).json({ message: err.message });
-    }
-};
-
-export const addVendor = async (req, res) => {
-    const vendor = req.body;
-    const newVendor = new VendorModel({ ...vendor });
-    try {
-        await newVendor.save();
-        res.status(201).json(newVendor);
-    } catch (err) {
-        res.status(409).json({ message: err.message });
-    }
-};
-
-export const updateVendor = async (req, res) => {
-    const { id: _id } = req.params;
-    const vendor = req.body;
-    try {
-        const updatedVendor = await VendorModel.findByIdAndUpdate(_id, { ...vendor, _id }, { new: true });
-        res.status(200).json(updatedVendor);
-    } catch (err) {
-        res.json({ message: err.message });
-    }
-};
-
-export const deleteVendor = async (req, res) => {
-    const { id } = req.params;
-    try {
-        await VendorModel.findByIdAndRemove(id);
-        res.json({ message: "Vendor deleted successfully" });
-    } catch (err) {
-        res.json({ message: err.message });
     }
 };
