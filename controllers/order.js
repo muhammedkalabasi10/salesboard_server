@@ -1,4 +1,26 @@
 import OrderModel from "../models/OrderModel.js";
+import { getMonthlySalesByVendor, getTotalSalesAndRevenueByProduct} from "../services/orderService.js";
+
+export const getMonthlySalesByVendorController = async (req, res) => {
+    const { vendorName } = await req.params;
+    try {
+        const salesData = await getMonthlySalesByVendor(vendorName);
+        res.status(200).json(salesData);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+export const getTotalSalesAndRevenueByProductController = async (req, res) => {
+    const { vendorName } = req.params;
+    const { start, limit } = req.query;
+    try {
+        const { salesData, totalRecords } = await getTotalSalesAndRevenueByProduct(vendorName, parseInt(start), parseInt(limit));
+        res.status(200).json({ products: salesData, totalRecords });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
 
 export const getOrders = async (req, res) => {
     try {
