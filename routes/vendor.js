@@ -1,11 +1,10 @@
 import express from 'express';
-import { getVendor, signIn } from '../controllers/vendor.js';
-import auth from '../middleware/auth.js'
+import { signIn, refresh, logout } from '../controllers/vendor.js';
 
 const router = express.Router();
 
-router.get('/:id', auth, getVendor);
 router.post('/signin', signIn);
-router.get('/refresh', refresh)
+router.get('/refresh', refresh);
+router.post('/logout', logout);
 
 export default router;
